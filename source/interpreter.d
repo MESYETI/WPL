@@ -87,6 +87,9 @@ class Interpreter {
 		SetVariable("stdout", Variable(Value.File(stdout)));
 		SetVariable("stderr", Variable(Value.File(stderr)));
 		SetVariable("stdin",  Variable(Value.File(stdin)));
+		SetVariable("unit",   Variable(Value.Unit()));
+		SetVariable("left",   Variable(Value.Integer(0)));
+		SetVariable("right",  Variable(Value.Integer(1)));
 
 		// strict operators
 		AddOp("+",   ValueType.Integer,      ValueType.Integer,      &AddInt);
@@ -163,6 +166,10 @@ class Interpreter {
 		AddOp(">",   ValueType.Float,        ValueType.Float,        &FloatGreater);
 		AddOp(">=",  ValueType.Float,        ValueType.Float,        &FloatGreaterE);
 		AddOp(".f",  ValueType.File,         ValueType.Float,        &WriteFloat);
+		AddOp("~",   ValueType.Lambda,       ValueType.Integer,      &Extract);
+		AddOp("<*",  ValueType.Lambda,       ValueType.Lambda,       &WriteLeft);
+		AddOp(">*",  ValueType.Lambda,       ValueType.Lambda,       &WriteRight);
+		AddOp(".*",  ValueType.Lambda,       ValueType.String,       &ChangeOp);
 
 		// not strict operators
 		AddOp(";", &Chain);
@@ -178,26 +185,27 @@ class Interpreter {
 		SetOpMeta("$::", true,  false);
 
 		// builtin functions
-		AddFunction("time",      &Time,     0);
-		AddFunction("open",      &Open,     2);
-		AddFunction("flush",     &Flush,    1);
-		AddFunction("close",     &Close,    1);
-		AddFunction("mkdir",     &Mkdir,    1);
-		AddFunction("fexists",   &FExists,  1);
-		AddFunction("alloc",     &Alloc,    1);
-		AddFunction("realloc",   &Realloc,  2);
-		AddFunction("free",      &Free,     1);
-		AddFunction("import",    &Import,   1);
-		AddFunction("export",    &Export,   1);
-		AddFunction("srand",     &SRand,    1);
-		AddFunction("rand",      &Rand,     0);
-		AddFunction("exit",      &Exit,     1);
-		AddFunction("fseek",     &FSeek,    3);
-		AddFunction("ftell",     &FTell,    1);
-		AddFunction("char_code", &CharCode, 1);
-		AddFunction("as_char",   &AsChar,   1);
-		AddFunction("float",     &Float,    1);
-		AddFunction("int",       &Int,      1);
+		AddFunction("time",      &Time,        0);
+		AddFunction("open",      &Open,        2);
+		AddFunction("flush",     &Flush,       1);
+		AddFunction("close",     &Close,       1);
+		AddFunction("mkdir",     &Mkdir,       1);
+		AddFunction("fexists",   &FExists,     1);
+		AddFunction("alloc",     &Alloc,       1);
+		AddFunction("realloc",   &Realloc,     2);
+		AddFunction("free",      &Free,        1);
+		AddFunction("import",    &Import,      1);
+		AddFunction("export",    &Export,      1);
+		AddFunction("srand",     &SRand,       1);
+		AddFunction("rand",      &Rand,        0);
+		AddFunction("exit",      &Exit,        1);
+		AddFunction("fseek",     &FSeek,       3);
+		AddFunction("ftell",     &FTell,       1);
+		AddFunction("char_code", &CharCode,    1);
+		AddFunction("as_char",   &AsChar,      1);
+		AddFunction("float",     &Float,       1);
+		AddFunction("int",       &Int,         1);
+		AddFunction("extract",   &ExtractFunc, 1);
 
 		// constnats
 		AddConstant("SEEK_SET", Value.Integer(SEEK_SET));

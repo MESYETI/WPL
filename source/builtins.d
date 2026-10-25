@@ -274,3 +274,16 @@ Value Int(Value[] args, Interpreter env) {
 
 	return Value.Integer(cast(long) value);
 }
+
+Value ExtractFunc(Value[] args, Interpreter env) {
+	AssertArgs(args, [ValueType.Function]);
+
+	auto value = cast(FunctionValue) args[0];
+
+	if (value.builtIn) {
+		return Value.Unit();
+	}
+	else {
+		return Value.Lambda(value.value);
+	}
+}

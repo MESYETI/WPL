@@ -1,6 +1,3 @@
-# Brainfuck interpreter
-
-# usage + cmd args
 (((argv - 0) == 1) ? {
 	(stdout .s "Usage:\n") ;
 	(stdout .s ("    " + ((argv : 0) : 0) + " [FILE]\n")) ;
@@ -11,15 +8,11 @@
 (fseek ! [file 0 SEEK_END]) ;
 (fileSize = (ftell ! [file])) ;
 (fseek ! [file 0 SEEK_SET]) ;
-
-# read file
 (program = (file , fileSize)) ;
-
-# execute the code
 (i = 0) ;
 (loops = []) ;
-(cells = (alloc ! [60000])) ; # create cells array
-(cells = (cells &$ i16)) ;    # set pointer to u16
+(cells = (alloc ! [60000])) ; 
+(cells = (cells &$ i16)) ; 
 (ptr = cells) ;
 ({i < (program - 0)} @ {
 	(ch = ((program : i) : "")) ;

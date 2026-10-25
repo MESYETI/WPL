@@ -1,0 +1,15 @@
+(tak = ([x y z] => {
+	((y < x) ? {
+		r = (tak ! [
+			(tak ! [(x - 1) y z])
+			(tak ! [(y - 1) z x])
+			(tak ! [(z - 1) x y])
+		])
+	}) ;
+	((y >= x) ? {
+		r = z
+	}) ;
+	r
+})) ;
+(stdout .d (tak ! [48 20 12])) ;
+(stdout .s "\n")

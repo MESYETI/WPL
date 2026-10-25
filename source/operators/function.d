@@ -4,6 +4,7 @@ import std.math;
 import std.stdio;
 import std.format;
 import wpl.value;
+import wpl.parser;
 import wpl.interpreter;
 
 static Value Function(Value pleft, Value pright, Interpreter env) {
@@ -47,5 +48,78 @@ static Value Call(Value pleft, Value pright, Interpreter env) {
 		env.RemoveScope();
 	}
 
+	return ret;
+}
+
+static Value Extract(Value pleft, Value pright, Interpreter env) {
+	auto left  = (cast(LambdaValue) pleft).value;
+	auto right = (cast(IntegerValue) pright).value;
+
+	auto ret = new LambdaValue();
+
+	if (left.type != NodeType.Expression) {
+		throw new OperatorException("Must pass lambda containing expression to extract");
+		// TODO: maybe allow this
+	}
+
+	auto expr = cast(ExpressionNode) left;
+
+	ret.value = right == 0? expr.left : expr.right;
+
+	return ret;
+}
+
+static Value WriteLeft(Value pleft, Value pright, Interpreter env) {
+	auto left  = (cast(LambdaValue) pleft).value;
+	auto right = (cast(LambdaValue) pright).value;
+
+	auto ret = new LambdaValue();
+
+	if (left.type != NodeType.Expression) {
+		throw new OperatorException("Must pass lambda containing expression to overwrite");
+	}
+
+	auto expr = cast(ExpressionNode) left;
+	expr.left = right;
+
+	ret.value = expr;
+	return ret;
+}
+
+static Value WriteRight(Value pleft, Value pright, Interpreter env) {
+	auto left  = (cast(LambdaValue) pleft).value;
+	auto right = (cast(LambdaValue) pright).value;
+
+	auto ret = new LambdaValue();
+
+	if (left.type != NodeType.Expression) {
+		throw new OperatorException("Must pass lambda containing expression to overwrite");
+	}
+
+	auto expr  = cast(ExpressionNode) left;
+	expr.right = right;
+
+	ret.value = expr;
+	return ret;
+}
+
+static Value ChangeOp(Value pleft, Value pright, Interpreter env) {
+	auto left  = (cast(LambdaValue) pleft).value;
+	auto right = (cast(StringValue) pright).value;
+
+	auto ret = new LambdaValue();
+
+	if (left.type != NodeType.Expression) {
+		throw new OperatorException("Must pass lambda containing expression to overwrite");
+	}
+
+	auto oldExpr = cast(ExpressionNode) left;
+
+	auto expr  = new ExpressionNode(oldExpr.info);
+	expr.left  = oldExpr.left;
+	expr.op    = right;
+	expr.right = oldExpr.right;
+
+	ret.value = expr;
 	return ret;
 }
