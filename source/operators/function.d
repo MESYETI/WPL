@@ -3,6 +3,7 @@ module wpl.operators.functions;
 import std.math;
 import std.stdio;
 import std.format;
+import wpl.error;
 import wpl.value;
 import wpl.parser;
 import wpl.interpreter;
@@ -78,9 +79,13 @@ static Value WriteLeft(Value pleft, Value pright, Interpreter env) {
 	if (left.type != NodeType.Expression) {
 		throw new OperatorException("Must pass lambda containing expression to overwrite");
 	}
+	
+	auto oldExpr = cast(ExpressionNode) left;
 
-	auto expr = cast(ExpressionNode) left;
-	expr.left = right;
+	auto expr  = new ExpressionNode(oldExpr.info);
+	expr.left  = right;
+	expr.op    = oldExpr.op;
+	expr.right = oldExpr.right;
 
 	ret.value = expr;
 	return ret;
@@ -96,7 +101,11 @@ static Value WriteRight(Value pleft, Value pright, Interpreter env) {
 		throw new OperatorException("Must pass lambda containing expression to overwrite");
 	}
 
-	auto expr  = cast(ExpressionNode) left;
+	auto oldExpr = cast(ExpressionNode) left;
+
+	auto expr  = new ExpressionNode(oldExpr.info);
+	expr.left  = oldExpr.left;
+	expr.op    = oldExpr.op;
 	expr.right = right;
 
 	ret.value = expr;
@@ -122,4 +131,22 @@ static Value ChangeOp(Value pleft, Value pright, Interpreter env) {
 
 	ret.value = expr;
 	return ret;
+}
+
+static Value LambdaCalculus(Value pleft, Value pright, Interpreter env) {
+	if (pleft.type != ValueType.Variable) {
+		throw new OperatorException("Lambda calculus operator expects parameter name");
+	}
+	if (pright.type != ValueType.Lambda) {
+		throw new OperatorException("Lambda calculus operator expects return thing");
+	}
+
+	auto left  = (cast(VariableValue) pleft).value;
+	auto right = (cast(LambdaValue) pright).value;
+
+	auto func    = new FunctionValue();
+	func.params  = [left];
+	func.builtIn = false;
+	func.value   = right;
+	return func;
 }

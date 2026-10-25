@@ -170,6 +170,7 @@ class Interpreter {
 		AddOp("<*",  ValueType.Lambda,       ValueType.Lambda,       &WriteLeft);
 		AddOp(">*",  ValueType.Lambda,       ValueType.Lambda,       &WriteRight);
 		AddOp(".*",  ValueType.Lambda,       ValueType.String,       &ChangeOp);
+		AddOp(",",   ValueType.Variable,     ValueType.Lambda,       &LambdaCalculus);
 
 		// not strict operators
 		AddOp(";", &Chain);
@@ -183,29 +184,31 @@ class Interpreter {
 		SetOpMeta("$=",  false, true);
 		SetOpMeta("$:",  true,  false);
 		SetOpMeta("$::", true,  false);
+		SetOpMeta(",",   false, false);
 
 		// builtin functions
-		AddFunction("time",      &Time,        0);
-		AddFunction("open",      &Open,        2);
-		AddFunction("flush",     &Flush,       1);
-		AddFunction("close",     &Close,       1);
-		AddFunction("mkdir",     &Mkdir,       1);
-		AddFunction("fexists",   &FExists,     1);
-		AddFunction("alloc",     &Alloc,       1);
-		AddFunction("realloc",   &Realloc,     2);
-		AddFunction("free",      &Free,        1);
-		AddFunction("import",    &Import,      1);
-		AddFunction("export",    &Export,      1);
-		AddFunction("srand",     &SRand,       1);
-		AddFunction("rand",      &Rand,        0);
-		AddFunction("exit",      &Exit,        1);
-		AddFunction("fseek",     &FSeek,       3);
-		AddFunction("ftell",     &FTell,       1);
-		AddFunction("char_code", &CharCode,    1);
-		AddFunction("as_char",   &AsChar,      1);
-		AddFunction("float",     &Float,       1);
-		AddFunction("int",       &Int,         1);
-		AddFunction("extract",   &ExtractFunc, 1);
+		AddFunction("time",         &Time,        0);
+		AddFunction("open",         &Open,        2);
+		AddFunction("flush",        &Flush,       1);
+		AddFunction("close",        &Close,       1);
+		AddFunction("mkdir",        &Mkdir,       1);
+		AddFunction("fexists",      &FExists,     1);
+		AddFunction("alloc",        &Alloc,       1);
+		AddFunction("realloc",      &Realloc,     2);
+		AddFunction("free",         &Free,        1);
+		AddFunction("import",       &Import,      1);
+		AddFunction("export",       &Export,      1);
+		AddFunction("srand",        &SRand,       1);
+		AddFunction("rand",         &Rand,        0);
+		AddFunction("exit",         &Exit,        1);
+		AddFunction("fseek",        &FSeek,       3);
+		AddFunction("ftell",        &FTell,       1);
+		AddFunction("char_code",    &CharCode,    1);
+		AddFunction("as_char",      &AsChar,      1);
+		AddFunction("float",        &Float,       1);
+		AddFunction("int",          &Int,         1);
+		AddFunction("extract",      &ExtractFunc, 1);
+		AddFunction("read_program", &ReadProgram, 1);
 
 		// constnats
 		AddConstant("SEEK_SET", Value.Integer(SEEK_SET));
@@ -242,35 +245,61 @@ class Interpreter {
 	}
 
 	bool VariableExists(string name) {
-		return (name in scopes[0]) || (name in scopes[$ - 1]);
+		// return (name in scopes[0]) || (name in scopes[$ - 1]);
+		foreach (ref scopeIt ; scopes) {
+			if (name in scopeIt) return true;
+		}
+
+		return false;
 	}
 
 	Variable GetVariable(string name) {
-		if (name in scopes[$ - 1]) return scopes[$ - 1][name];
-		return scopes[0][name];
+		// if (name in scopes[$ - 1]) return scopes[$ - 1][name];
+		// return scopes[0][name];
+
+		foreach (ref scopeIt ; scopes) {
+			if (name in scopeIt) return scopeIt[name];
+		}
+
+		assert(0);
 	}
 
 	Value* GetVariableRef(string name) {
-		if (name in scopes[$ - 1]) return &scopes[$ - 1][name].value;
-		return &scopes[0][name].value;
+		// if (name in scopes[$ - 1]) return &scopes[$ - 1][name].value;
+		// return &scopes[0][name].value;
+
+		foreach (ref scopeIt ; scopes) {
+			if (name in scopeIt) return &scopeIt[name].value;
+		}
+
+		assert(0);
 	}
 
 	void SetVariable(string name) {
-		if (name in scopes[0]) {
-			scopes[0][name] = Variable(Value.Unit());
+		// if (name in scopes[0]) {
+		// 	scopes[0][name] = Variable(Value.Unit());
+		// }
+		// else {
+		// 	scopes[$ - 1][name] = Variable(Value.Unit());
+		// }
+
+		foreach (ref scopeIt ; scopes) {
+			if (name in scopeIt) {
+				scopeIt[name] = Variable(Value.Unit());
+			}
 		}
-		else {
-			scopes[$ - 1][name] = Variable(Value.Unit());
-		}
+
+		scopes[$ - 1][name] = Variable(Value.Unit());
 	}
 
 	void SetVariable(string name, Variable value) {
-		if (name in scopes[0]) {
-			scopes[0][name] = value;
+		foreach (ref scopeIt ; scopes) {
+			if (name in scopeIt) {
+				scopeIt[name] = value;
+			}
 		}
-		else {
-			scopes[$ - 1][name] = value;
-		}
+
+		scopes[$ - 1][name] = value;
 	}
 
 	void SetLocal(string name, Variable value) {

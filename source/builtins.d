@@ -287,3 +287,42 @@ Value ExtractFunc(Value[] args, Interpreter env) {
 		return Value.Lambda(value.value);
 	}
 }
+
+Value ReadProgram(Value[] args, Interpreter env) {
+	AssertArgs(args, [ValueType.String]);
+
+	auto   path = (cast(StringValue) args[0]).value;
+	string code;
+
+	try {
+		code = readText(path);
+	}
+	catch (Exception) {
+		throw new OperatorException(format("Failed to read '%s'", path));
+	}
+
+	auto lexer = new Lexer();
+	lexer.code = code;
+	lexer.file = path;
+
+	try {
+		lexer.Lex();
+	}
+	catch (Exception) {
+		throw new OperatorException(format("Failed to read '%s'", path));
+	}
+
+	auto parser   = new Parser();
+	parser.tokens = lexer.tokens;
+
+	Node program;
+
+	try {
+		program = parser.ParseOperator();
+	}
+	catch (Exception) {
+		throw new OperatorException(format("Failed to read '%s'", path));
+	}
+
+	return Value.Lambda(program);
+}
